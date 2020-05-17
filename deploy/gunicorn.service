@@ -1,0 +1,18 @@
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/project/project-back
+ExecStart=/home/ubuntu/project/projectenv/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --timeout 120 \
+          --bind unix:/run/gunicorn.sock \
+          server.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
