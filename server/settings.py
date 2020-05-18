@@ -57,7 +57,8 @@ INSTALLED_APPS = [
     'django_filters',
     'django_extensions',
     'corsheaders',
-    'django.contrib.admindocs'
+    'django.contrib.admindocs',
+    'channels'
 ]
 
 MIDDLEWARE = [
@@ -92,6 +93,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'server.wsgi.application'
 
+ASGI_APPLICATION = "back.routing.application"
 
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
