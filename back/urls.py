@@ -8,6 +8,8 @@ from back.views.authviews import obtain_jwt_token, google_login
 
 router = routers.DefaultRouter()
 router.register(r'users', views.UserView)
+router.register(r'waiting_user', views.WaitingUserView)
+router.register(r'game_session', views.GameSessionView)
 
 urlpatterns = [
     url(r'^', include(router.urls)),

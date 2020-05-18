@@ -9,12 +9,12 @@ from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 
-from back.serializers import UserSerializer
+from back.models import WaitingUser, GameSession
+from back.serializers import UserSerializer, WaitingUserSerializer, GameSessionSerializer
 from back.utils import CustomPageNumberPagination
 from django.http import Http404
 
 from django.shortcuts import render
-
 
 
 User = get_user_model()
@@ -45,6 +45,42 @@ class UserView(viewsets.ModelViewSet):
             return Response("User does not exist", 404)
 
         return Response("User deleted", 204)
+
+
+class WaitingUserView(viewsets.ModelViewSet):
+    serializer_class = WaitingUserSerializer
+    queryset = WaitingUser.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        if WaitingUser.objects.exists():
+            try:
+                old = WaitingUser.objects.get(user__id=request.user.id)
+                old.delete()
+            except WaitingUser.DoesNotExist:
+                waiting_user = WaitingUser.objects.first()
+                data = {
+                    'player_1': request.user.id,
+                    'player_2': waiting_user.user.id
+                }
+                session = GameSessionSerializer(data=data, context={'request': self.request})
+                if session.is_valid():
+                    session.save()
+                    waiting_user.delete()
+                    return Response({
+                        'game_session': session.data
+                    }, 200)
+                else:
+                    return Response({
+                        'error': 'Could not create game session',
+                        'detail': session.errors
+                    }, 400)
+        request.data['user'] = request.user.id
+        return super(WaitingUserView, self).create(request, *args, **kwargs)
+
+
+class GameSessionView(viewsets.ModelViewSet):
+    serializer_class = GameSessionSerializer
+    queryset = GameSession.objects.filter(is_active=True)
 
 
 def index(request):

@@ -4,6 +4,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model  # If used custom user model
 from rest_framework.validators import UniqueValidator
 
+from back.models import WaitingUser, GameSession
 from back.utils import get_default_admin_user
 
 UserModel = get_user_model()
@@ -81,3 +82,28 @@ class UsernameSerializer(BaseSerializer):
 
 class GoogleSerializer(serializers.Serializer):
     access_token = serializers.CharField(required=True)
+
+
+class WaitingUserSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=UserModel.objects.filter(is_active=True), required=False)
+
+    def validate(self, attrs):
+        try:
+            old = WaitingUser.objects.filter(user__id=attrs['user'].id)
+            old.delete()
+        except WaitingUser.DoesNotExist:
+            pass
+        return attrs
+
+    class Meta:
+        model = WaitingUser
+        fields = '__all__'
+
+
+class GameSessionSerializer(BaseSerializer):
+    player_1 = serializers.PrimaryKeyRelatedField(queryset=UserModel.objects.filter(is_active=True), required=True)
+    player_2 = serializers.PrimaryKeyRelatedField(queryset=UserModel.objects.filter(is_active=True), required=True)
+
+    class Meta:
+        model = GameSession
+        fields = '__all__'
