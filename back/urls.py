@@ -1,4 +1,5 @@
 from django.conf.urls import url, include
+from django.urls import path
 from rest_framework import routers, permissions
 from rest_framework.documentation import include_docs_urls
 
@@ -17,5 +18,7 @@ urlpatterns = [
     )),
     url(r'auth/login/', obtain_jwt_token),
     url(r'google/login/', google_login),
+    path('chat/', views.index, name='index'),
+    path('chat/<str:room_name>/', views.room, name='room'),
 
 ]

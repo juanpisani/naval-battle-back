@@ -13,6 +13,9 @@ from back.serializers import UserSerializer
 from back.utils import CustomPageNumberPagination
 from django.http import Http404
 
+from django.shortcuts import render
+
+
 
 User = get_user_model()
 
@@ -42,3 +45,13 @@ class UserView(viewsets.ModelViewSet):
             return Response("User does not exist", 404)
 
         return Response("User deleted", 204)
+
+
+def index(request):
+    return render(request, 'index.html')
+
+
+def room(request, room_name):
+    return render(request, 'room.html', {
+        'room_name': room_name
+    })
