@@ -31,8 +31,11 @@ class User(AbstractUser):
 
 class WaitingUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    game_session_id = models.CharField(max_length=10)
 
 
 class GameSession(BaseModel):
     player_1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='player_1')
     player_2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='player_2')
+    player_1_connected = models.BooleanField()
+    player_2_connected = models.BooleanField()

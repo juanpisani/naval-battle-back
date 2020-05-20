@@ -86,6 +86,7 @@ class GoogleSerializer(serializers.Serializer):
 
 class WaitingUserSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=UserModel.objects.filter(is_active=True), required=False)
+    game_session_id = serializers.CharField(max_length=10, required=False)
 
     def validate(self, attrs):
         try:
@@ -101,8 +102,10 @@ class WaitingUserSerializer(serializers.ModelSerializer):
 
 
 class GameSessionSerializer(BaseSerializer):
-    player_1 = serializers.PrimaryKeyRelatedField(queryset=UserModel.objects.filter(is_active=True), required=True)
-    player_2 = serializers.PrimaryKeyRelatedField(queryset=UserModel.objects.filter(is_active=True), required=True)
+    player_1 = serializers.PrimaryKeyRelatedField(queryset=UserModel.objects.filter(is_active=True), required=False)
+    player_2 = serializers.PrimaryKeyRelatedField(queryset=UserModel.objects.filter(is_active=True), required=False)
+    player_1_connected = serializers.BooleanField(required=False, default=False)
+    player_2_connected = serializers.BooleanField(required=False, default=False)
 
     class Meta:
         model = GameSession
