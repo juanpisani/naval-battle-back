@@ -1,4 +1,5 @@
 import django_filters
+from asgiref.sync import sync_to_async
 
 from django.contrib.auth import get_user_model
 from django_filters import FilterSet
@@ -51,56 +52,38 @@ class WaitingUserView(viewsets.ModelViewSet):
     serializer_class = WaitingUserSerializer
     queryset = WaitingUser.objects.all()
 
-    async def create(self, request, *args, **kwargs):
-        # if WaitingUser.objects.exists():
-        #     try:
-        #         old = WaitingUser.objects.get(user__id=request.user.id)
-        #         old.delete()
-        #     except WaitingUser.DoesNotExist:
-        #         waiting_user = WaitingUser.objects.first()
-        #         data = {
-        #             'player_1': request.user.id,
-        #             'player_2': waiting_user.user.id
-        #         }
-        #         session = GameSessionSerializer(data=data, context={'request': self.request})
-        #         if session.is_valid():
-        #             session.save()
-        #             waiting_user.delete()
-        #             return Response({
-        #                 'game_session': session.data
-        #             }, 200)
-        #         else:
-        #             return Response({
-        #                 'error': 'Could not create game session',
-        #                 'detail': session.errors
-        #             }, 400)
-        # request.data['user'] = request.user.id
+    def create(self, request, *args, **kwargs):
         if WaitingUser.objects.exists():
             waiting = WaitingUser.objects.first()
-            try:
-                session = GameSession.objects.get(id=waiting.game_session_id)
-                session.player_2 = request.user
-                session.save()
+            if waiting.user.id == request.user.id:
                 waiting.delete()
-                consumer = GameSessionConsumer()
-                await consumer.connect(data={'session_id': session.id})
-                return Response({
-                    'game_session': session.data
-                }, 200)
-            except GameSession.DoesNotExist:
-                return Response({
-                    'message': 'Game session does not exist'
-                }, 400)
-        else:
-            session_serializer = GameSessionSerializer(data={'player_1': request.user.id}, context={'request': request})
-            if session_serializer.is_valid():
-                session_serializer.save()
+                GameSession.objects.get(id=waiting.game_session_id).delete()
+            else:
+                try:
+                    session = GameSession.objects.get(id=waiting.game_session_id)
+                    session.player_2 = request.user
+                    session.save()
+                    waiting.delete()
+                    consumer = GameSessionConsumer()
+                    sync_to_async(consumer.connect(data={'session_id': session.id}))
+                    return Response({
+                        'game_session_id': session.id
+                    }, 200)
+                except GameSession.DoesNotExist:
+                    return Response({
+                        'message': 'Game session does not exist'
+                    }, 400)
+        session_serializer = GameSessionSerializer(data={'player_1': request.user.id}, context={'request': request})
+        if session_serializer.is_valid():
+            session_serializer.save()
         request.data['user'] = request.user.id
         request.data['game_session_id'] = session_serializer.instance.id
         response = super(WaitingUserView, self).create(request, *args, **kwargs)
         consumer = GameSessionConsumer()
-        await consumer.connect(data={'session_id': session_serializer.id})
-        return response
+        sync_to_async(consumer.connect(data={'session_id': session_serializer.instance.id}))
+        return Response({
+            'game_session_id': session_serializer.instance.id
+        }, 200)
 
 
 class GameSessionView(viewsets.ModelViewSet):

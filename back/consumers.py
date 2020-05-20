@@ -51,6 +51,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 class GameSessionConsumer(AsyncWebsocketConsumer):
 
+    def __init__(self):
+        pass
+
     async def connect(self, data=None):
         self.session_id = data['session_id']
 

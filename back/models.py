@@ -35,7 +35,7 @@ class WaitingUser(models.Model):
 
 
 class GameSession(BaseModel):
-    player_1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='player_1')
-    player_2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='player_2')
+    player_1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='player_1', null=True)
+    player_2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='player_2', null=True)
     player_1_connected = models.BooleanField()
     player_2_connected = models.BooleanField()
