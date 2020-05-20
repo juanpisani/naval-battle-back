@@ -42,7 +42,15 @@ class GameSessionConsumer(AsyncWebsocketConsumer):
                     self.room_group_name,
                     {
                         'type': 'game_start',
-                        'message': 'Start game'
+                        'message': 'Start game',
+                        'player_1': {
+                            'id': session.player_1.id,
+                            'email': session.player_1.email,
+                        },
+                        'player_2': {
+                            'id': session.player_2.id,
+                            'email': session.player_2.email,
+                        }
                     }
                 )
             else:
@@ -65,10 +73,14 @@ class GameSessionConsumer(AsyncWebsocketConsumer):
     async def game_start(self, event):
         message = event['message']
         type = event['type']
+        player_1 = event['player_1']
+        player_2 = event['player_2']
 
         await self.send(text_data=json.dumps({
             'command': type,
-            'message': message
+            'message': message,
+            'player_1': player_1,
+            'player_2': player_2,
         }))
 
     async def waiting(self, event):
