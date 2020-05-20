@@ -51,11 +51,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 class GameSessionConsumer(AsyncWebsocketConsumer):
 
-    def __init__(self):
-        pass
+    def __init__(self, data):
+        self.session_id = data['session_id']
 
     async def connect(self, data=None):
-        self.session_id = data['session_id']
 
         await self.channel_layer.group_add(
             self.session_id

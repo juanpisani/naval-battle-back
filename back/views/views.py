@@ -64,8 +64,8 @@ class WaitingUserView(viewsets.ModelViewSet):
                     session.player_2 = request.user
                     session.save()
                     waiting.delete()
-                    consumer = GameSessionConsumer()
-                    sync_to_async(consumer.connect(data={'session_id': session.id}))
+                    consumer = GameSessionConsumer(data={'session_id': session.id})
+                    sync_to_async(consumer.connect())
                     return Response({
                         'game_session_id': session.id
                     }, 200)
@@ -78,8 +78,8 @@ class WaitingUserView(viewsets.ModelViewSet):
             session_serializer.save()
         request.data['user'] = request.user.id
         request.data['game_session_id'] = session_serializer.instance.id
-        consumer = GameSessionConsumer()
-        sync_to_async(consumer.connect(data={'session_id': session_serializer.instance.id}))
+        consumer = GameSessionConsumer(data={'session_id': session_serializer.instance.id})
+        sync_to_async(consumer.connect())
         super(WaitingUserView, self).create(request, *args, **kwargs)
         return Response({
             'game_session_id': session_serializer.instance.id
