@@ -10,6 +10,7 @@ class GameSessionConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['session_id']
         self.room_group_name = 'game_%s' % self.room_name
+        self.turn = 1
 
         await self.channel_layer.group_add(
             self.room_group_name,
@@ -27,6 +28,14 @@ class GameSessionConsumer(AsyncWebsocketConsumer):
             session_id = text_data_json['roomId']
             user_id = text_data_json['userId']
             await self.receive_player(session_id=session_id, user_id=user_id)
+
+        if command == 'attack':
+            user_id = text_data_json['userId']
+            cell = text_data_json['cell']
+            await self.receive_attack(user_id, cell)
+
+    # async def receive_attack(self, user_id, cell):
+    #
 
     async def receive_player(self, session_id, user_id):
         session = GameSession.objects.get(id=session_id)

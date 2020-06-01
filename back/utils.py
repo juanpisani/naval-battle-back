@@ -86,3 +86,5 @@ def random_string(string_length):
     letters = string.ascii_uppercase
     return ''.join(random.choice(letters) for i in range(string_length))
 
+# def cell_to_pos(cell):
+#
