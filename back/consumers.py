@@ -3,6 +3,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from back.models import GameSession
+from back.utils import cell_to_pos, change_turn
 
 
 class GameSessionConsumer(AsyncWebsocketConsumer):
@@ -10,6 +11,7 @@ class GameSessionConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['session_id']
         self.room_group_name = 'game_%s' % self.room_name
+        self.game = GameSession.objects.get(id=self.scope['url_route']['kwargs']['session_id'])
         self.turn = 1
 
         await self.channel_layer.group_add(
@@ -34,8 +36,23 @@ class GameSessionConsumer(AsyncWebsocketConsumer):
             cell = text_data_json['cell']
             await self.receive_attack(user_id, cell)
 
-    # async def receive_attack(self, user_id, cell):
-    #
+    async def receive_attack(self, user_id, cell):
+        row, column = cell_to_pos(cell)
+        if not self.game.player_1_board[row][column]['boat']:
+            # todo miss
+            self.turn = change_turn(self.turn)
+        else:
+            # todo check endgame
+            # todo hit
+            pass
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'continue_game',
+                'message': 'Continue with game',
+                'turn': change_turn(self.turn)
+            }
+        )
 
     async def receive_player(self, session_id, user_id):
         session = GameSession.objects.get(id=session_id)
@@ -99,4 +116,15 @@ class GameSessionConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'command': type,
             'message': message
+        }))
+
+    async def continue_game(self, event):
+        type = event['type']
+        message = event['message']
+        turn = event['turn']
+
+        await self.send(text_data=json.dumps({
+            'command': type,
+            'message': message,
+            'turn': turn
         }))

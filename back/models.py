@@ -39,3 +39,5 @@ class GameSession(BaseModel):
     player_2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='player_2', null=True)
     player_1_connected = models.BooleanField()
     player_2_connected = models.BooleanField()
+    player_1_board = None
+    player_2_board = None

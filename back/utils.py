@@ -86,5 +86,37 @@ def random_string(string_length):
     letters = string.ascii_uppercase
     return ''.join(random.choice(letters) for i in range(string_length))
 
-# def cell_to_pos(cell):
-#
+
+ROW_MAP = {
+    'A': 0,
+    'B': 1,
+    'C': 2,
+    'D': 3,
+    'E': 4,
+    'F': 5,
+    'G': 6,
+    'H': 7,
+    'I': 8,
+    'J': 9,
+    0: 'A',
+    1: 'B',
+    2: 'C',
+    3: 'D',
+    4: 'E',
+    5: 'F',
+    6: 'G',
+    7: 'H',
+    8: 'I',
+    9: 'J',
+}
+
+
+# example A1
+def cell_to_pos(cell):
+    return ROW_MAP[cell[0]], int(cell[1]) - 1
+
+
+def change_turn(turn):
+    if turn == 1:
+        return 2
+    return 1
