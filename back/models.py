@@ -1,9 +1,16 @@
+import json
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 import django
+from model_utils import Choices
+
 from server import settings
 # Create your models here.
+
+LETTERS = Choices('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J')
+NUMBERS = Choices('1', '2', '3', '4', '5', '6', '7', '8', '9', '10')
 
 
 class BaseModel(models.Model):
@@ -39,3 +46,24 @@ class GameSession(BaseModel):
     player_2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='player_2', null=True)
     player_1_connected = models.BooleanField()
     player_2_connected = models.BooleanField()
+    player_1_board = None
+    player_2_board = None
+
+    def set_up_player_board(self, user_id, board):
+        if self.player_1.id == user_id:
+            self.player_1_board = board
+        elif self.player_2.id == user_id:
+            self.player_2_board = board
+
+
+class Cell:
+    boat = False
+
+    def __init__(self, boat):
+        self.boat = boat
+
+    def __str__(self):
+        return self.boat
+
+    def toJSON(self):
+        return {"boat": self.boat}
