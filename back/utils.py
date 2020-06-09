@@ -142,6 +142,7 @@ def dict_to_board(board):
                 result[i][j] = Cell(False).toJSON()
     return result
 
+
 # example A1
 def cell_to_pos(cell):
     return ROW_MAP[cell[0]], int(cell[1]) - 1
