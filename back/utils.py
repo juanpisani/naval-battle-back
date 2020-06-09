@@ -2,10 +2,13 @@ import string
 import time
 import random
 
+import numpy as np
 from django.db.models import Func
 from rest_framework import pagination
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
+
+from back.models import Cell
 from server import settings
 User = get_user_model()
 
@@ -110,6 +113,34 @@ ROW_MAP = {
     9: 'J',
 }
 
+
+# fila x columna
+def dict_to_board(board):
+    result = np.empty((10, 10), dtype=Cell)
+    for i in range(len(board)):
+        extreme1 = board[i]['extreme1']
+        extreme2 = board[i]['extreme2']
+        lower = extreme1
+        higher = extreme2
+        # caso {extreme1: A1, extreme2: A4}
+        if extreme1[0] == extreme2[0]:
+            if extreme1[1] > extreme2[1]:
+                lower = extreme2
+                higher = extreme1
+            for j in range(int(lower[1]) - 1, int(higher[1])):
+                result[ROW_MAP[lower[0]]][j] = Cell(True).toJSON()
+        else:
+            # caso {extreme1: C5, extreme2: F5}
+            if ROW_MAP[extreme1[0]] > ROW_MAP[extreme2[0]]:
+                lower = extreme2
+                higher = extreme1
+            for j in range(ROW_MAP[lower[0]], ROW_MAP[higher[0]] + 1):
+                result[j][int(lower[1]) - 1] = Cell(True).toJSON()
+    for i in range(0, 10):
+        for j in range(0, 10):
+            if result[i][j] is None:
+                result[i][j] = Cell(False).toJSON()
+    return result
 
 # example A1
 def cell_to_pos(cell):

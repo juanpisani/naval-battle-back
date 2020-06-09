@@ -4,6 +4,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 from back.models import GameSession
 from back.utils import cell_to_pos, change_turn
+from back.utils import dict_to_board
 
 
 class GameSessionConsumer(AsyncWebsocketConsumer):
@@ -31,10 +32,39 @@ class GameSessionConsumer(AsyncWebsocketConsumer):
             user_id = text_data_json['userId']
             await self.receive_player(session_id=session_id, user_id=user_id)
 
+        if command == 'boards':
+            user_id = text_data_json['userId']
+            board_json = text_data_json['board']
+            await self.receive_board(user_id, board_json)
+
         if command == 'attack':
             user_id = text_data_json['userId']
             cell = text_data_json['cell']
             await self.receive_attack(user_id, cell)
+
+    async def receive_board(self, user_id, board_json):
+        board = dict_to_board(board_json)
+        self.game.set_up_player_board(user_id, board)
+        self.game.save()
+
+        if self.game.player_1_board is not None and self.game.player_2_board is not None:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'boards_ready',
+                    'message': 'Start game both players have filled their boards',
+                    'player_1_board': self.game.player_1_board,
+                    'player_2_board': self.game.player_2_board
+                }
+            )
+        else:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'waiting',
+                    'message': 'Waiting for players to fill their boards'
+                }
+            )
 
     async def receive_attack(self, user_id, cell):
         row, column = cell_to_pos(cell)
@@ -116,6 +146,19 @@ class GameSessionConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'command': type,
             'message': message
+        }))
+
+    async def boards_ready(self, event):
+        message = event['message']
+        type = event['type']
+        player_1_board = event['player_1_board']
+        player_2_board = event['player_2_board']
+
+        await self.send(text_data=json.dumps({
+            'command': type,
+            'message': message,
+            'player_1_board': player_1_board,
+            'player_2_board': player_2_board,
         }))
 
     async def continue_game(self, event):
