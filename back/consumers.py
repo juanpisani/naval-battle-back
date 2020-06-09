@@ -3,7 +3,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from back.models import GameSession
-from back.utils import cell_to_pos, change_turn
+from back.utils import cell_to_pos, start_shots_board
 from back.utils import dict_to_board
 
 
@@ -44,10 +44,15 @@ class GameSessionConsumer(AsyncWebsocketConsumer):
 
     async def receive_board(self, user_id, board_json):
         board = dict_to_board(board_json)
-        self.game.set_up_player_board(user_id, board)
-        self.game.save()
+        if user_id == self.game.player_1.id:
+            self.game.player_1_board = board
+        else:
+            self.game.player_2_board = board
 
         if self.game.player_1_board is not None and self.game.player_2_board is not None:
+            self.game.player_1_shots_board = start_shots_board()
+            self.game.player_2_shots_board = start_shots_board()
+            # todo checkear si se puede mandar a una persona y no todo el grupo
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -68,19 +73,38 @@ class GameSessionConsumer(AsyncWebsocketConsumer):
 
     async def receive_attack(self, user_id, cell):
         row, column = cell_to_pos(cell)
-        if not self.game.player_1_board[row][column]['boat']:
-            # todo miss
-            self.turn = change_turn(self.turn)
+        if user_id == self.game.player_1.id:
+            if not self.game.player_2_board[row][column]['boat']:
+                # todo miss
+                self.game.player_1_hits[row][column]['shot'] = True
+                self.game.player_1_hits[row][column]['hit'] = False
+                self.turn = 2
+            else:
+                # todo check endgame
+                # todo hit
+                self.game.player_1_hits[row][column]['shot'] = True
+                self.game.player_1_hits[row][column]['hit'] = True
+                self.game.hit(user_id)
+                pass
         else:
-            # todo check endgame
-            # todo hit
-            pass
+            if not self.game.player_1_board[row][column]['boat']:
+                # todo miss
+                self.game.player_2_hits[row][column]['shot'] = True
+                self.game.player_2_hits[row][column]['hit'] = False
+                self.turn = 1
+            else:
+                # todo check endgame
+                # todo hit
+                self.game.player_2_hits[row][column]['shot'] = True
+                self.game.player_2_hits[row][column]['hit'] = True
+                self.game.hit(user_id)
+                pass
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'continue_game',
                 'message': 'Continue with game',
-                'turn': change_turn(self.turn)
+                'turn': self.turn
             }
         )
 

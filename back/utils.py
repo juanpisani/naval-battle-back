@@ -8,7 +8,7 @@ from rest_framework import pagination
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 
-from back.models import Cell
+from back.models import BoatCell, ShotCell
 from server import settings
 User = get_user_model()
 
@@ -116,39 +116,44 @@ ROW_MAP = {
 
 # fila x columna
 def dict_to_board(board):
-    result = np.empty((10, 10), dtype=Cell)
+    result = np.empty((10, 10), dtype=BoatCell)
     for i in range(len(board)):
         extreme1 = board[i]['extreme1']
         extreme2 = board[i]['extreme2']
         lower = extreme1
         higher = extreme2
+        # caso {extreme1: A1, extreme2: A1}
+        if extreme1 == extreme2:
+            result[ROW_MAP[extreme1[0]]][int(extreme1[1])] = BoatCell(True).toJSON()
         # caso {extreme1: A1, extreme2: A4}
-        if extreme1[0] == extreme2[0]:
+        elif extreme1[0] == extreme2[0]:
             if extreme1[1] > extreme2[1]:
                 lower = extreme2
                 higher = extreme1
             for j in range(int(lower[1]) - 1, int(higher[1])):
-                result[ROW_MAP[lower[0]]][j] = Cell(True).toJSON()
+                result[ROW_MAP[lower[0]]][j] = BoatCell(True).toJSON()
         else:
             # caso {extreme1: C5, extreme2: F5}
             if ROW_MAP[extreme1[0]] > ROW_MAP[extreme2[0]]:
                 lower = extreme2
                 higher = extreme1
             for j in range(ROW_MAP[lower[0]], ROW_MAP[higher[0]] + 1):
-                result[j][int(lower[1]) - 1] = Cell(True).toJSON()
+                result[j][int(lower[1]) - 1] = BoatCell(True).toJSON()
     for i in range(0, 10):
         for j in range(0, 10):
             if result[i][j] is None:
-                result[i][j] = Cell(False).toJSON()
+                result[i][j] = BoatCell(False).toJSON()
+    return result
+
+
+def start_shots_board():
+    result = np.empty((10, 10), dtype=ShotCell)
+    for i in range(0, 10):
+        for j in range(0, 10):
+            result[i][j] = ShotCell(False, False).toJSON()
     return result
 
 
 # example A1
 def cell_to_pos(cell):
     return ROW_MAP[cell[0]], int(cell[1]) - 1
-
-
-def change_turn(turn):
-    if turn == 1:
-        return 2
-    return 1

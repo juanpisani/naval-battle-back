@@ -112,7 +112,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'naval_battle',
         'HOST': 'localhost',
-        'USER': 'changuito',
+        'USER': 'chango',
         'PASSWORD': 'Changuito10'
     }
 }

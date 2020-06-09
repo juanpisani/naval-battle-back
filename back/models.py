@@ -47,7 +47,17 @@ class GameSession(BaseModel):
     player_1_connected = models.BooleanField()
     player_2_connected = models.BooleanField()
     player_1_board = None
+    player_1_shots_board = None
     player_2_board = None
+    player_2_shots_board = None
+    player_1_hits = 0
+    player_2_hits = 0
+
+    def hit(self, user_id):
+        if self.player_1.id == user_id:
+            self.player_1_hits += 1
+        elif self.player_2.id == user_id:
+            self.player_2_hits += 1
 
     def set_up_player_board(self, user_id, board):
         if self.player_1.id == user_id:
@@ -56,8 +66,7 @@ class GameSession(BaseModel):
             self.player_2_board = board
 
 
-class Cell:
-    boat = False
+class BoatCell:
 
     def __init__(self, boat):
         self.boat = boat
@@ -67,3 +76,13 @@ class Cell:
 
     def toJSON(self):
         return {"boat": self.boat}
+
+
+class ShotCell:
+
+    def __init__(self, shot, hit):
+        self.shot = shot
+        self.hit = hit
+
+    def toJSON(self):
+        return {"shot": self.shot, "hit": self.hit}

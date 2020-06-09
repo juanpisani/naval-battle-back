@@ -110,3 +110,7 @@ class GameSessionSerializer(BaseSerializer):
     class Meta:
         model = GameSession
         fields = '__all__'
+
+
+class CellSerializer(serializers.Serializer):
+    boat = serializers.BooleanField()
