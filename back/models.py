@@ -35,25 +35,16 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
 
-
-class WaitingUser(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    game_session_id = models.CharField(max_length=10)
-
-
-class GameSession(BaseModel):
-    player_1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='player_1', null=True)
-    player_2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='player_2', null=True)
-    player_1_connected = models.BooleanField()
-    player_2_connected = models.BooleanField()
-    player_1_board = None
-    player_2_board = None
-
-    def set_up_player_board(self, user_id, board):
-        if self.player_1.id == user_id:
-            self.player_1_board = board
-        elif self.player_2.id == user_id:
-            self.player_2_board = board
+# class WaitingUser(models.Model):
+#     user = models.OneToOneField(User, on_delete=models.CASCADE)
+#     game_session_id = models.CharField(max_length=10)
+#
+#
+# class GameSession(BaseModel):
+#     player_1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='player_1', null=True)
+#     player_2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='player_2', null=True)
+#     player_1_connected = models.BooleanField()
+#     player_2_connected = models.BooleanField()
 
 
 class Cell:

@@ -1,3 +1,4 @@
+attr
 boto3==1.9.188
 amqp==2.4.2
 billiard==3.5.0.5
