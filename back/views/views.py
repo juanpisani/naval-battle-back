@@ -10,7 +10,7 @@ from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 
-from back.consumers import GameSessionConsumer
+# from back.consumers import PlayerConsumer
 from back.models import WaitingUser, GameSession
 from back.serializers import UserSerializer, WaitingUserSerializer, GameSessionSerializer
 from back.utils import CustomPageNumberPagination

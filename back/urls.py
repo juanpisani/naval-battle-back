@@ -20,7 +20,7 @@ urlpatterns = [
     )),
     url(r'auth/login/', obtain_jwt_token),
     url(r'google/login/', google_login),
-    path('chat/', views.index, name='index'),
-    path('chat/<str:room_name>/', views.room, name='room'),
+    # path('chat/', views.index, name='index'),
+    # path('chat/<str:room_name>/', views.room, name='room'),
 
 ]

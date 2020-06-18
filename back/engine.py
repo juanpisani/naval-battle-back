@@ -12,7 +12,7 @@ from channels.layers import get_channel_layer
 log = logging.getLogger(__name__)
 
 
-@attr.s
+@attr.s()
 class Cell:
     x: int = attr.ib(validator=attr.validators.instance_of(int))
     y: int = attr.ib(validator=attr.validators.instance_of(int))
@@ -34,7 +34,7 @@ class Cell:
         }
 
 
-@attr.s
+@attr.s()
 class Player:
     user_id = attr.ib()
     boats_parts_left: int = attr.ib(default=20)
@@ -57,11 +57,11 @@ class Player:
 
 
 # todo el board donde guesseamos el del oponente, que no tiene los boards
-@attr.s
+@attr.s()
 class Board:
     owner: Player = attr.ib(validator=attr.validators.instance_of(Player))
     # mhmhm y ahora de que nos disfrazamos?
-    dimensions: Cell[[]] = attr.ib(default=numpy.empty((10, 10), dtype=Cell))
+    dimensions: [[Cell]] = attr.ib(default=numpy.empty((10, 10), dtype=Cell))
 
     # blocks: Set[Cell] = attr.ib(default=attr.Factory(set))
 
@@ -79,7 +79,7 @@ class Board:
         }
 
 
-@attr.s
+@attr.s()
 class State:
     boards: Mapping[str, Board] = attr.ib(
         default=attr.Factory(dict), validator=attr.validators.instance_of(Board)
@@ -105,7 +105,7 @@ class GameEngine(threading.Thread):
     player_turn = 0
 
     def __init__(self, group_name, **kwargs):
-        log.info("Init GameEngine...")
+        log.debug("Init GameEngine...")
         super(GameEngine, self).__init__(daemon=True, name="GameEngine", **kwargs)
         self.name = uuid.uuid4()
         self.group_name = group_name
@@ -117,7 +117,7 @@ class GameEngine(threading.Thread):
         self.player_lock = threading.Lock()
 
     def run(self):
-        log.info("Starting engine loop")
+        log.debug("Starting engine loop")
         while True:
             self.broadcast_state(self.state)
 
@@ -132,7 +132,7 @@ class GameEngine(threading.Thread):
     def next_turn(self) -> State:
         # check if players son solo 1, entonces ganaste perro
         self.player_turn += 1
-        log.info("Turn %d for game %s", self.player_turn, self.name)
+        log.debug("Turn %d for game %s", self.player_turn, self.name)
         state = self.state
         # mhmh hace falta? si en el init pones que reciba solo 2 players no hace falta meter gente a mitad del game
         # mhm pero si se le cae el juego al breo?
@@ -142,16 +142,16 @@ class GameEngine(threading.Thread):
         return state
 
     def join_queue(self, player: str, at_front=False) -> None:
-        log.info("Player %s joining queue (Front? %r)", player, at_front)
+        log.debug("Player %s joining queue (Front? %r)", player, at_front)
         if player in self.state.players:
-            log.info("Player %s is already in a game", player)
+            log.debug("Player %s is already in a game", player)
             return
 
         if len(self.player_queue) > 2:
             log.warning("Game capacity full")
             return
 
-        # mhmhm this
+        # mhmhm if len(player.queue) = 2 arrancan
         with self.player_lock:
             self.player_queue[player] = True
             if at_front:
@@ -159,7 +159,7 @@ class GameEngine(threading.Thread):
 
     # mhmmhmh doubt (x)
     def get_queued_player(self) -> Optional[str]:
-        log.info("Getting next player in queue")
+        log.debug("Getting next player in queue")
         with self.player_lock:
             try:
                 player, _ = self.player_queue.popitem(last=False)
@@ -169,10 +169,10 @@ class GameEngine(threading.Thread):
                 return None
 
     def check_winner(self, state: State) -> State:
-        log.info("Checking winner")
+        log.debug("Checking winner")
         dead = [user_id for user_id, player in state.players.items() if player.boats_parts_left == 0]
         for user_id in dead:
-            log.info("Player %s lost", user_id)
+            log.debug("Player %s lost", user_id)
             state.players.pop(user_id)
         #     mmhmh tengo un player y ahora que?
         return state
@@ -189,8 +189,8 @@ class GameEngine(threading.Thread):
                 if cell.x == x and cell.y == y:
                     return cell if not cell.is_hit else None
 
-    def shoot(self, player, shoot) -> None:
-        log.info("Player shooting: %s", player)
+    def receive_shoot(self, player, shoot) -> None:
+        log.debug("Player shooting: %s", player)
         (opponent_id, opponent_player) = self.without_keys(self.state.players, player)
         opponent_board = [board for board in self.state.boards.values() if board.owner.user_id == opponent_id][0]
         cell = self.get_cell(opponent_board, shoot.x, shoot.y)
@@ -204,14 +204,14 @@ class GameEngine(threading.Thread):
 
     #     if not cell? no pudo shotear el breo
 
-    def set_pieces(self, player, cells_with_boats_parts) -> None:
-        log.info("Player setting pieces: %s", player)
+    def receive_board(self, player, cells_with_boats_parts) -> None:
+        log.debug("Player setting pieces: %s", player)
         own_board = [board for board in self.state.boards.values() if board.owner.user_id == player][0]
         for cell in cells_with_boats_parts:
             self.get_cell(own_board, cell[0], cell[1]).set_boat_part()
 
     def process_new_players(self, state: State) -> State:
-        log.info("Processing new players for game: %s", self.name)
+        log.debug("Processing new players for game: %s", self.name)
         user_id = self.get_queued_player()
         if not user_id:
             return state
@@ -219,9 +219,9 @@ class GameEngine(threading.Thread):
         # check if player has already lost
         player = state.players.pop(user_id, None)
         if player:
-            log.info("Player %s is rejoining.", player)
+            log.debug("Player %s is rejoining.", player)
 
-        log.info("Player joining %s", user_id)
+        log.debug("Player joining %s", user_id)
 
         # generate random position and add to state
         dims = self.dimensions
@@ -230,5 +230,5 @@ class GameEngine(threading.Thread):
 
         p = Player(user_id=user_id)
         state.players[user_id] = p
-        log.info("New player %s added", user_id)
+        log.debug("New player %s added", user_id)
         return state
